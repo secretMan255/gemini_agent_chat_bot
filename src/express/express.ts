@@ -406,7 +406,7 @@ export class ApiExpress {
     }
 
     /** Graceful shutdown */
-    public static terminate() {
+    public static async terminate() {
         if (this.server) {
             this.server.close(() => console.log('API server have been shutdown ...'))
         } else {

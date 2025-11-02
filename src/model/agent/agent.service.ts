@@ -1,22 +1,26 @@
 import { GoogleGenAi } from '../../googleGenAi/google.gen.ai'
+import { ChatMessage, MessagePart } from '../../mongodb/model/message'
+import { MongoDB } from '../../mongodb/mongodb'
 
 type GeneralAgentDTO = {
     prompt: string
 }
 
 export class AgentService {
-    private static conversationHistory: any[] = []
 
     public static async GeneralAgent(dto: GeneralAgentDTO) {
-        let thoughts: string = ''
-        let answer: string = ''
+        // get chat message history
+        const historyDocs = await MongoDB.getRecentMessage(200)
+        const history = historyDocs.map(m => ({ role: m.role, parts: m.parts }))
 
-        const newContent = { role: 'user', parts: [{ text: dto.prompt }] }
-        this.conversationHistory.push(newContent)
+        // user current input
+        const userPrompt = { role: 'user', parts: [{ text: dto.prompt }] as MessagePart[] }
+        const contents = [...history, userPrompt]
 
+        // call gemini model
         const response = await GoogleGenAi.ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: this.conversationHistory,
+            contents,
             config: {
                 // google search
                 tools: [{ googleSearch: {} }],
@@ -25,13 +29,13 @@ export class AgentService {
             }
         })
 
-        if (!response.candidates || response.candidates.length === 0) {
-            throw new Error("Model response candidates are empty.");
-        }
+        // check gemini response
+        if (!response.candidates || response.candidates.length === 0) return { ret: -1, msg: 'Model response candidates are empty.' }
 
-        let modelResponse = response.candidates[0].content
+        let thoughts: string = ''
+        let answer: string = ''
 
-        this.conversationHistory.push(modelResponse)
+        const modelResponse = response.candidates[0].content
 
         for (const part of modelResponse.parts) {
             if (!part.text) {
@@ -43,6 +47,15 @@ export class AgentService {
                 answer = answer + part.text
             }
         }
+
+
+        // save chat history
+        const now = new Date()
+        const docs: ChatMessage[] = [
+            { role: 'user', parts: userPrompt.parts, createdAt: now },
+            { role: 'model', parts: (modelResponse.parts as any) || [], createdAt: now }
+        ]
+        await MongoDB.appendMessages(docs)
 
         return { thoughts, answer }
     }
