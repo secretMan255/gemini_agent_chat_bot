@@ -1,4 +1,3 @@
-import { config } from 'dotenv';
 import { GoogleGenAi } from '../../googleGenAi/google.gen.ai'
 
 type GeneralAgentDTO = {
@@ -6,37 +5,42 @@ type GeneralAgentDTO = {
 }
 
 export class AgentService {
+    private static conversationHistory: any[] = []
+
     public static async GeneralAgent(dto: GeneralAgentDTO) {
-        let thoughts: string
-        let answer: any
+        let thoughts: string = ''
+        let answer: string = ''
 
-        const response = await GoogleGenAi.ai.models.generateContentStream({
-            model: "gemini-2.5-flash",
-            contents: dto.prompt,
+        const newContent = { role: 'user', parts: [{ text: dto.prompt }] }
+        this.conversationHistory.push(newContent)
+
+        const response = await GoogleGenAi.ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: this.conversationHistory,
             config: {
-                thinkingConfig: {
-                    includeThoughts: true,
-                },
-            },
-        });
+                // google search
+                tools: [{ googleSearch: {} }],
+                // thinking mode
+                thinkingConfig: { includeThoughts: true },
+            }
+        })
 
-        for await (const chunk of response) {
-            for (const part of chunk.candidates[0].content.parts) {
-                if (!part.text) {
-                    continue;
-                } else if (part.thought) {
-                    if (!thoughts) {
-                        console.log("Thoughts summary:");
-                    }
-                    console.log(part.text);
-                    thoughts = thoughts + part.text;
-                } else {
-                    if (!answer) {
-                        console.log("Answer:");
-                    }
-                    console.log(part.text);
-                    answer = answer + part.text;
-                }
+        if (!response.candidates || response.candidates.length === 0) {
+            throw new Error("Model response candidates are empty.");
+        }
+
+        let modelResponse = response.candidates[0].content
+
+        this.conversationHistory.push(modelResponse)
+
+        for (const part of modelResponse.parts) {
+            if (!part.text) {
+                continue
+            }
+            else if (part.thought) {
+                thoughts = thoughts + part.text
+            } else {
+                answer = answer + part.text
             }
         }
 
