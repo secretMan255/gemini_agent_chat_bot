@@ -82,10 +82,15 @@ CORS_CREDENTIALS=true
 # JWT
 JWT_SECRET=change_me
 JWT_EXPIRES=1d        # e.g. '1d' | '7d' | '3600s'
+ALLOWED_ORIGINS='1.1.1.1'
 
 # Cookie/JWT mode & security
 TOKEN_MODE=cookie     # or 'token'
 SECURE=false          # set true in production (HTTPS)
+
+# MongoDB
+MONGO_DB=scheme name
+MONGO_URI=mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database[.collection]][?options]]
 ```
 
 > The service loads env via `dotenv`. Ensure `.env` exists or export envs in your shell.
