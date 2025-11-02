@@ -1,0 +1,50 @@
+{
+  // This is an alias to @tsconfig/node16: https://github.com/tsconfig/bases
+  "extends": "ts-node/node16/tsconfig.json",
+  // Most ts-node options can be specified here using their programmatic names.
+  "ts-node": {
+    // "swc": true,
+    // It is faster to skip typechecking.
+    // Remove if you want ts-node to do typechecking.
+    "transpileOnly": true,
+    "files": false,
+    "compilerOptions": {
+      // compilerOptions specified here will override those declared below,
+      // but only in ts-node.  Useful if you want ts-node and tsc to use
+      // different options with a single tsconfig.json.
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true
+    }
+  },
+  "compilerOptions": {
+    "strict": false,
+    "module": "CommonJS",
+    "esModuleInterop": true,
+    "target": "es2022",
+    "noImplicitAny": false,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "./src",
+    "baseUrl": "./src",
+    "resolveJsonModule": true,
+    "declaration": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "isolatedModules": false
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "*/.test.ts",
+    "*/.spec.ts",
+    "*/.helper.ts",
+    "jest.init.ts",
+    "jest.helper.ts",
+    "node_modules",
+    "dist"
+  ]
+}
